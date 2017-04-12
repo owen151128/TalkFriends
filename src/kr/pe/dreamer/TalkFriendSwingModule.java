@@ -31,6 +31,8 @@ public class TalkFriendSwingModule extends JFrame {
 	private String[] article = null;
 	private String[] image = null;
 	private String[] timeId = null;
+	private String[] userId = null;
+	private String[] info = null;
 	private TalkFriendParseModule module = null;
 	private String[][] result = null;
 	private JLabel[] textLabel = null;
@@ -91,6 +93,7 @@ public class TalkFriendSwingModule extends JFrame {
 		article = result[3];
 		image = result[4];
 		timeId = result[5];
+		userId = result[6];
 		textLabel = new JLabel[name.length];
 		panel = new JPanel[name.length];
 		imageLabel = new JLabel[image.length];
@@ -119,6 +122,7 @@ public class TalkFriendSwingModule extends JFrame {
 			panel[i] = new JPanel();
 			panel[i].add(imageLabel[i]);
 			panel[i].add(textLabel[i]);
+			panel[i].add(new JLabel(userId[i]));
 		}
 
 		if (search != null) {
@@ -149,7 +153,9 @@ public class TalkFriendSwingModule extends JFrame {
 	}
 
 	public boolean updateScreen(String search, String timeMessage) {
-		while (!(time[0].equals(timeMessage))) {
+		while (!(time[time.length - 1].equals(timeMessage))) {
+			if (time[time.length - 1].contains("시간전") && timeMessage.contains("분전"))
+				break;
 			loadText.setText("불러오는중 ... " + time[time.length - 1] + " / " + name[name.length - 1]);
 			module = new TalkFriendParseModule(timeId[timeId.length - 1], "9414065",
 					"7cb27443127e05841cbdb0da2963c1d8");
@@ -161,6 +167,7 @@ public class TalkFriendSwingModule extends JFrame {
 			article = result[3];
 			image = result[4];
 			timeId = result[5];
+			userId = result[6];
 
 			textLabel = new JLabel[name.length];
 
@@ -188,6 +195,7 @@ public class TalkFriendSwingModule extends JFrame {
 				panel[i] = new JPanel();
 				panel[i].add(imageLabel[i]);
 				panel[i].add(textLabel[i]);
+				panel[i].add(new JLabel(userId[i]));
 			}
 
 			if (search != null) {
