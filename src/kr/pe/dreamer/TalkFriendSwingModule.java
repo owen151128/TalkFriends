@@ -5,13 +5,19 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.Image;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
+import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -19,12 +25,14 @@ import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
 
-public class TalkFriendSwingModule extends JFrame {
+public class TalkFriendSwingModule extends JFrame implements ActionListener {
 	private static final long serialVersionUID = 1L;
 	private final String SPLASH_IMAGE = "splash.jpg";
 	private JPanel panelMain = null;
 	private JScrollPane scroll = null;
+	private String target = null;
 	private int scrollCount = 0;
+	private String[] id = null;
 	private String[] name = null;
 	private String[] age = null;
 	private String[] time = null;
@@ -32,13 +40,16 @@ public class TalkFriendSwingModule extends JFrame {
 	private String[] image = null;
 	private String[] timeId = null;
 	private String[] userId = null;
-	private String[] info = null;
+	private ArrayList<String> idList = null;
 	private TalkFriendParseModule module = null;
 	private String[][] result = null;
 	private JLabel[] textLabel = null;
+	private JButton[] addButton = null;
 	private JPanel[] panel = null;
+	private JPanel[] idPanel = null;
 	private Image imageBuffer = null;
 	private JLabel[] imageLabel = null;
+	private JLabel[] idLabel = null;
 	private JDialog splash = null;
 	private JLabel background = null;
 	private JProgressBar progress = null;
@@ -79,6 +90,11 @@ public class TalkFriendSwingModule extends JFrame {
 	}
 
 	private boolean splashDestroy() {
+		scrollCount *= 2;
+		panelMain.setLayout(new GridLayout(scrollCount, 1));
+		this.invalidate();
+		this.validate();
+		this.repaint();
 		splash.setVisible(false);
 		this.setVisible(true);
 		return true;
@@ -94,9 +110,14 @@ public class TalkFriendSwingModule extends JFrame {
 		image = result[4];
 		timeId = result[5];
 		userId = result[6];
+		idList = new ArrayList<>();
+		idList.addAll(Arrays.asList(userId));
 		textLabel = new JLabel[name.length];
 		panel = new JPanel[name.length];
+		idLabel = new JLabel[name.length];
+		idPanel = new JPanel[name.length];
 		imageLabel = new JLabel[image.length];
+		addButton = new JButton[name.length];
 
 		loadText.setText("불러오는중 ... " + time[time.length - 1] + " / " + name[name.length - 1]);
 
@@ -104,6 +125,8 @@ public class TalkFriendSwingModule extends JFrame {
 		imageBuffer = null;
 
 		for (int i = 0; i < name.length; i++) {
+			addButton[i] = new JButton("친구 추가 요청" + " (" + userId[i] + ")");
+			addButton[i].addActionListener(this);
 			textLabel[i] = new JLabel(
 					"<html>" + name[i] + " / " + age[i] + " / " + time[i] + " / " + "<br/>" + article[i] + "</html>");
 			textLabel[i].setFont(new Font("나눔고딕", Font.PLAIN, 14));
@@ -122,20 +145,36 @@ public class TalkFriendSwingModule extends JFrame {
 			panel[i] = new JPanel();
 			panel[i].add(imageLabel[i]);
 			panel[i].add(textLabel[i]);
-			panel[i].add(new JLabel(userId[i]));
+			panel[i].add(addButton[i]);
+		}
+
+		for (int i = 0; i < name.length; i++) {
+			id = module.getUserInfo(userId[i]);
+			idLabel[i] = new JLabel();
+			for (int j = 0; j < id.length; j++) {
+				if (j != 0)
+					idLabel[i].setText(idLabel[i].getText() + " " + id[j]);
+			}
+		}
+
+		for (int i = 0; i < name.length; i++) {
+			idPanel[i] = new JPanel();
+			idPanel[i].add(idLabel[i]);
 		}
 
 		if (search != null) {
 			for (int i = 0; i < panel.length; i++) {
-				if (!(name[i].contains(search) | article[i].contains(search))) {
+				if (!(name[i].contains(search) | article[i].contains(search) | idLabel[i].getText().contains(search))) {
 					scrollCount--;
 					continue;
 				}
 				panelMain.add(panel[i]);
+				panelMain.add(idPanel[i]);
 			}
 		} else {
 			for (int i = 0; i < panel.length; i++) {
 				panelMain.add(panel[i]);
+				panelMain.add(idPanel[i]);
 			}
 		}
 
@@ -149,6 +188,20 @@ public class TalkFriendSwingModule extends JFrame {
 		this.repaint();
 		if (loopSw == false)
 			splashDestroy();
+		return true;
+	}
+
+	public boolean addFriendsRequest(String id, String message) {
+		try {
+			URL url = null;
+			String encodeMessage = URLEncoder.encode(message, "UTF-8");
+			url = new URL(TalkFriendParseModule.getAddFriendsUrl("9414065", "7cb27443127e05841cbdb0da2963c1d8")
+					+ encodeMessage + "&target_id=" + id);
+			url.openStream();
+		} catch (IOException e) {
+			e.printStackTrace();
+			return false;
+		}
 		return true;
 	}
 
@@ -169,14 +222,23 @@ public class TalkFriendSwingModule extends JFrame {
 			timeId = result[5];
 			userId = result[6];
 
+			idList.addAll(Arrays.asList(userId));
+
 			textLabel = new JLabel[name.length];
+			idLabel = new JLabel[name.length];
 
 			panel = new JPanel[name.length];
+
+			idPanel = new JPanel[name.length];
 
 			imageLabel = new JLabel[image.length];
 			imageBuffer = null;
 
+			addButton = new JButton[name.length];
+
 			for (int i = 0; i < name.length; i++) {
+				addButton[i] = new JButton("친구 추가 요청" + " (" + userId[i] + ")");
+				addButton[i].addActionListener(this);
 				textLabel[i] = new JLabel("<html>" + name[i] + " / " + age[i] + " / " + time[i] + " / " + "<br/>"
 						+ article[i] + "</html>");
 				textLabel[i].setFont(new Font("나눔고딕", Font.PLAIN, 14));
@@ -195,20 +257,37 @@ public class TalkFriendSwingModule extends JFrame {
 				panel[i] = new JPanel();
 				panel[i].add(imageLabel[i]);
 				panel[i].add(textLabel[i]);
-				panel[i].add(new JLabel(userId[i]));
+				panel[i].add(addButton[i]);
+			}
+
+			for (int i = 0; i < name.length; i++) {
+				id = module.getUserInfo(userId[i]);
+				idLabel[i] = new JLabel();
+				for (int j = 0; j < id.length; j++) {
+					if (j != 0)
+						idLabel[i].setText(idLabel[i].getText() + " " + id[j]);
+				}
+			}
+
+			for (int i = 0; i < name.length; i++) {
+				idPanel[i] = new JPanel();
+				idPanel[i].add(idLabel[i]);
 			}
 
 			if (search != null) {
 				for (int i = 0; i < panel.length; i++) {
-					if (!(name[i].contains(search) | article[i].contains(search))) {
+					if (!(name[i].contains(search) | article[i].contains(search)
+							| idLabel[i].getText().contains(search))) {
 						scrollCount--;
 						continue;
 					}
 					panelMain.add(panel[i]);
+					panelMain.add(idPanel[i]);
 				}
 			} else {
 				for (int i = 0; i < panel.length; i++) {
 					panelMain.add(panel[i]);
+					panelMain.add(idPanel[i]);
 				}
 			}
 
@@ -220,5 +299,19 @@ public class TalkFriendSwingModule extends JFrame {
 		}
 		splashDestroy();
 		return true;
+	}
+
+	@Override
+	public void actionPerformed(ActionEvent e) {
+		int i = 0;
+		target = e.getActionCommand();
+		target = target.substring(target.indexOf("(") + 1, target.length() - 1);
+		while (true) {
+			if (target.equals(idList.get(i))) {
+				addFriendsRequest(idList.get(i), null);
+				break;
+			}
+			i++;
+		}
 	}
 }

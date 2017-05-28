@@ -1,10 +1,6 @@
 package kr.pe.dreamer;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 
 import org.jsoup.Jsoup;
@@ -49,13 +45,19 @@ public class TalkFriendParseModule {
 
 	}
 
+	public static String getAddFriendsUrl(String uid, String token) {
+		return String.format(
+				"http://api2.sntown.com/www/menu_friends/make_friends.php?user_id=%s&token=%s&app_lang=ko&type=request&request_msg=",
+				uid, token);
+	}
+
 	public String[][] getList() {
 		try {
 			document = Jsoup.connect(baseUrl).get();
-			BufferedWriter bw = new BufferedWriter(
-					new OutputStreamWriter(new FileOutputStream(new File("/Users/dreamer/java_tmp"))));
-			bw.write(document.toString());
-			bw.close();
+			// BufferedWriter bw = new BufferedWriter(new
+			// FileWriter("/Users/dreamer/tf_all", true));
+			// bw.write(document.toString());
+			// bw.close();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -86,11 +88,13 @@ public class TalkFriendParseModule {
 			image.add(e.attr("src"));
 		} // image_end
 
-		elements = document.select("li"); // timeId_start
+		elements = document.select("li"); // timeId & userId_start
 		for (Element e : elements) {
-			timeId.add(e.attr("data-signin_date"));
-			userId.add(e.attr("data-user_id"));
-		} // timeId_end
+			if (e.attr("style").equals("")) {
+				timeId.add(e.attr("data-signin_date"));
+				userId.add(e.attr("data-user_id"));
+			}
+		} // timeId & userId_end
 
 		String[][] result = { name.toArray(new String[name.size()]), age.toArray(new String[age.size()]),
 				time.toArray(new String[time.size()]), article.toArray(new String[article.size()]),
@@ -102,7 +106,7 @@ public class TalkFriendParseModule {
 
 	public String[] getUserInfo(String id) {
 		try { // userInfo_start
-
+			userInfo.clear();
 			document = Jsoup.connect(info1 + id + info2).get();
 			elements = document.select("p");
 			int integer = 0;
